@@ -19,10 +19,17 @@ Each tenant database has the exact same schema (`menu_items`, `orders`,
 ### Setup
 
 ```bash
-make db-up      # start MySQL in Docker
-make db-setup   # apply migrations, seeds, database users and grants
+make db-up      # start MySQL; a fresh volume is provisioned automatically
+make db-setup   # re-apply migrations/seeds/users to a running database
 make db-verify  # check schemas, seed rows and tenant isolation
 ```
+
+The first time the `mysql_data` volume is created, MySQL runs
+`scripts/docker-init.sh` from `/docker-entrypoint-initdb.d`, which creates the
+databases, applies both migrations, seeds every tenant and creates the users.
+The init scripts do not run again on later starts because the data directory is
+already initialized; use `make db-setup` for an existing database or
+`make db-reset` to wipe the volume and provision from scratch.
 
 `make db-setup` and `make db-verify` are safe to re-run. To start from a clean
 volume, use `make db-reset`.
@@ -35,7 +42,8 @@ migrations/setup/002_users.sql       # tenant users + read-only master user
 migrations/master/001_init.sql       # mini_master.tenants + registry seed
 migrations/tenant/001_init.sql       # identical schema, applied to every tenant DB
 seeds/tenant_<code>.sql              # per-tenant seed data
-scripts/db-setup.sh                  # applies everything above
+scripts/docker-init.sh               # container-side bootstrap (auto-run by compose)
+scripts/db-setup.sh                  # applies everything above from the host
 scripts/db-verify.sh                 # checks data and user isolation
 ```
 
