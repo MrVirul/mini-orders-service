@@ -1,6 +1,8 @@
 -- Seed the master tenants registry.
 -- Applied to mini_master by the MySQL entrypoint.
--- Keep these host/port/credential values in sync with docker-compose.yaml.
+-- MySQL init SQL cannot read environment variables, so these values are
+-- static. Keep them in sync with .env (PIZZA_DB_USER/PASSWORD,
+-- SUSHI_DB_USER/PASSWORD) and the ports in docker-compose.yaml.
 -- Safe to re-run.
 
 INSERT INTO tenants (x_tenant_code, site_name, host, port, database_name, username, password, currency)

@@ -63,8 +63,10 @@ belong in `.env` files, which are git-ignored and never logged.
 Each tenant user exists only inside its own container, so even a leaked
 credential cannot reach another tenant.
 
-Tenant ports and credentials are static in `docker-compose.yaml` and
-`seeds/master_tenants.sql`. If you change one, change both.
+Tenant credentials are loaded from `.env` by `docker-compose.yaml`. The master
+registry seed (`seeds/master_tenants.sql`) is plain SQL and cannot read `.env`,
+so if you change a tenant credential or port, update that file too and run
+`make db-reset`.
 
 ### Manual verification
 

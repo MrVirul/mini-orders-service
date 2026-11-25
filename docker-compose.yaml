@@ -31,8 +31,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: tenant_pizza_palace
-      MYSQL_USER: pizza_palace_user
-      MYSQL_PASSWORD: pizza_local_pw
+      MYSQL_USER: ${PIZZA_DB_USER}
+      MYSQL_PASSWORD: ${PIZZA_DB_PASSWORD}
 
     ports:
       - "3307:3306"
@@ -56,8 +56,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: tenant_sushi_house
-      MYSQL_USER: sushi_house_user
-      MYSQL_PASSWORD: sushi_local_pw
+      MYSQL_USER: ${SUSHI_DB_USER}
+      MYSQL_PASSWORD: ${SUSHI_DB_PASSWORD}
 
     ports:
       - "3308:3306"
