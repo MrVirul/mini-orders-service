@@ -1,12 +1,7 @@
 -- Master database: the tenants registry.
--- Run against the MySQL server (the USE below selects the schema).
+--
+-- Applied to mini_master by the MySQL entrypoint (MYSQL_DATABASE=mini_master).
 -- Safe to re-run.
-
-CREATE DATABASE IF NOT EXISTS mini_master
-    CHARACTER SET utf8mb4
-    COLLATE utf8mb4_unicode_ci;
-
-USE mini_master;
 
 CREATE TABLE IF NOT EXISTS tenants (
     id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -25,20 +20,3 @@ CREATE TABLE IF NOT EXISTS tenants (
     UNIQUE KEY uq_tenants_x_tenant_code (x_tenant_code),
     UNIQUE KEY uq_tenants_database_name (database_name)
 ) ENGINE=InnoDB;
-
--- Seed the registry. Re-running converges the rows to the values below.
-INSERT INTO tenants (x_tenant_code, site_name, host, port, database_name, username, password, currency)
-VALUES
-    ('pizza_palace', 'Pizza Palace', 'localhost', '3306', 'tenant_pizza_palace', 'pizza_palace_user', 'pizza_local_pw', 'GBP'),
-    ('sushi_house',  'Sushi House',  'localhost', '3306', 'tenant_sushi_house',  'sushi_house_user',  'sushi_local_pw',  'EUR'),
-    ('burger_barn',  'Burger Barn',  'localhost', '3306', 'tenant_burger_barn',  'burger_barn_user',  'burger_local_pw', 'GBP')
-AS new
-ON DUPLICATE KEY UPDATE
-    site_name     = new.site_name,
-    host          = new.host,
-    port          = new.port,
-    database_name = new.database_name,
-    username      = new.username,
-    password      = new.password,
-    currency      = new.currency,
-    is_active     = 1;

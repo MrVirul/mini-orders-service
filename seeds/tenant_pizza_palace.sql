@@ -1,6 +1,5 @@
 -- Seed data for tenant_pizza_palace.
--- Run against tenant_pizza_palace. Safe to re-run.
-USE tenant_pizza_palace;
+-- Applied to tenant_pizza_palace by the MySQL entrypoint. Safe to re-run.
 
 INSERT INTO menu_items (id, name, description, price_minor)
 VALUES

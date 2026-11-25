@@ -1,23 +1,16 @@
 SHELL := /bin/bash
 
-.PHONY: db-up db-down db-logs db-setup db-verify db-reset
+.PHONY: db-up db-down db-logs db-reset
 
-db-up: ## Start the local MySQL container
+db-up: ## Start the local MySQL containers
 	docker compose up -d
 
-db-down: ## Stop the local MySQL container (keeps data)
+db-down: ## Stop the local MySQL containers (keeps data)
 	docker compose down
 
-db-logs: ## Follow MySQL logs
-	docker compose logs -f mysql
+db-logs: ## Follow logs from all MySQL containers
+	docker compose logs -f
 
-db-setup: ## Apply all migrations, seeds and database users
-	./scripts/db-setup.sh
-
-db-verify: ## Check schemas, seed data and tenant isolation
-	./scripts/db-verify.sh
-
-db-reset: ## Destroy the MySQL volume and rebuild everything
+db-reset: ## Destroy the MySQL volumes and reprovision from the SQL files
 	docker compose down -v
 	docker compose up -d
-	./scripts/db-setup.sh

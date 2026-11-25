@@ -1,6 +1,5 @@
 -- Seed data for tenant_sushi_house.
--- Run against tenant_sushi_house. Safe to re-run.
-USE tenant_sushi_house;
+-- Applied to tenant_sushi_house by the MySQL entrypoint. Safe to re-run.
 
 INSERT INTO menu_items (id, name, description, price_minor)
 VALUES
