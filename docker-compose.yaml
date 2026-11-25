@@ -1,0 +1,79 @@
+services:
+  mysql-master:
+    image: mysql:8.0
+    container_name: mini-orders-mysql-master
+    restart: unless-stopped
+
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: mini_master
+
+    ports:
+      - "${MYSQL_MASTER_PORT:-3306}:3306"
+
+    volumes:
+      - mysql_master_data:/var/lib/mysql
+      - ./migrations/master/001_init.sql:/docker-entrypoint-initdb.d/10-schema.sql:ro
+      - ./seeds/master_tenants.sql:/docker-entrypoint-initdb.d/20-tenants.sql:ro
+      - ./migrations/master/002_user.sql:/docker-entrypoint-initdb.d/30-user.sql:ro
+
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mysql-tenant-pizza:
+    image: mysql:8.0
+    container_name: mini-orders-mysql-pizza
+    restart: unless-stopped
+
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: tenant_pizza_palace
+      MYSQL_USER: ${PIZZA_DB_USER}
+      MYSQL_PASSWORD: ${PIZZA_DB_PASSWORD}
+
+    ports:
+      - "3307:3306"
+
+    volumes:
+      - mysql_pizza_data:/var/lib/mysql
+      - ./migrations/tenant/001_init.sql:/docker-entrypoint-initdb.d/10-schema.sql:ro
+      - ./seeds/tenant_pizza_palace.sql:/docker-entrypoint-initdb.d/20-seed.sql:ro
+
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mysql-tenant-sushi:
+    image: mysql:8.0
+    container_name: mini-orders-mysql-sushi
+    restart: unless-stopped
+
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: tenant_sushi_house
+      MYSQL_USER: ${SUSHI_DB_USER}
+      MYSQL_PASSWORD: ${SUSHI_DB_PASSWORD}
+
+    ports:
+      - "3308:3306"
+
+    volumes:
+      - mysql_sushi_data:/var/lib/mysql
+      - ./migrations/tenant/001_init.sql:/docker-entrypoint-initdb.d/10-schema.sql:ro
+      - ./seeds/tenant_sushi_house.sql:/docker-entrypoint-initdb.d/20-seed.sql:ro
+
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mysql_master_data:
+  mysql_pizza_data:
+  mysql_sushi_data:
