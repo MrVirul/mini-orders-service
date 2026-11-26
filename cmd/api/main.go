@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -17,6 +18,12 @@ const (
 )
 
 func main() {
+	if err := run(); err != nil {
+		log.Fatalf("application error: %v", err)
+	}
+}
+
+func run() error {
 	app := newApp()
 
 	ctx, stop := signal.NotifyContext(
@@ -27,6 +34,7 @@ func main() {
 	defer stop()
 
 	errCh := make(chan error, 1)
+
 	go func() {
 		errCh <- app.Listen(":" + port)
 	}()
@@ -34,10 +42,13 @@ func main() {
 	select {
 	case err := <-errCh:
 		if err != nil {
-			log.Fatalf("http server: %v", err)
+			return fmt.Errorf("http server: %w", err)
 		}
+
+		return nil
+
 	case <-ctx.Done():
-		log.Println("shutting down...")
+		log.Println("shutdown signal received")
 
 		shutdownCtx, cancel := context.WithTimeout(
 			context.Background(),
@@ -46,8 +57,11 @@ func main() {
 		defer cancel()
 
 		if err := app.ShutdownWithContext(shutdownCtx); err != nil {
-			log.Printf("graceful shutdown failed: %v", err)
+			return fmt.Errorf("graceful shutdown failed: %w", err)
 		}
+
+		log.Println("server shutdown complete")
+		return nil
 	}
 }
 
@@ -55,7 +69,9 @@ func newApp() *fiber.App {
 	app := fiber.New()
 
 	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{"status": "ok"})
+		return c.JSON(fiber.Map{
+			"status": "ok",
+		})
 	})
 
 	return app
