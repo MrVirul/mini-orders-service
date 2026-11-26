@@ -2,6 +2,33 @@
 
 Multi-tenant order service (Go intern assignment).
 
+## Run the API
+
+Requires Go (see `go.mod`).
+
+```bash
+go run ./cmd/api
+```
+
+The server listens on port `3000`. Verify it:
+
+```bash
+curl -i localhost:3000/health
+# HTTP/1.1 200 OK
+# {"status":"ok"}
+```
+
+Stop it with `Ctrl+C` (SIGINT) or `SIGTERM`; the server shuts down gracefully.
+MySQL is not required for `/health` at this stage.
+
+Run the checks with:
+
+```bash
+gofmt -l .
+go vet ./...
+go test ./...
+```
+
 ## Local database
 
 The local environment runs three MySQL 8.0 containers. Each tenant has its own
