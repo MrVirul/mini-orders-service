@@ -18,7 +18,7 @@ func (f fakePinger) PingContext(context.Context) error { return f.err }
 func getHealth(t *testing.T, p pinger) (int, map[string]string) {
 	t.Helper()
 
-	app := newApp(p)
+	app := newApp(p, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	resp, err := app.Test(req, -1)

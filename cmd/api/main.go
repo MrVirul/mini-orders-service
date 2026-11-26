@@ -13,6 +13,9 @@ import (
 
 	"github.com/MrVirul/mini-orders-service/internal/config"
 	"github.com/MrVirul/mini-orders-service/internal/database"
+	"github.com/MrVirul/mini-orders-service/internal/httpx"
+	"github.com/MrVirul/mini-orders-service/internal/middleware"
+	"github.com/MrVirul/mini-orders-service/internal/tenant"
 )
 
 const (
@@ -42,7 +45,10 @@ func run() error {
 
 	log.Println("connected to master database")
 
-	app := newApp(db)
+	pools := database.NewPoolManager()
+	defer pools.Close()
+
+	app := newApp(db, tenant.NewService(tenant.NewRepository(db), pools))
 
 	ctx, stop := signal.NotifyContext(
 		context.Background(),
@@ -88,8 +94,9 @@ type pinger interface {
 	PingContext(ctx context.Context) error
 }
 
-func newApp(master pinger) *fiber.App {
+func newApp(master pinger, resolver middleware.Resolver) *fiber.App {
 	app := fiber.New()
+	app.Use(middleware.RequestLogger())
 
 	app.Get("/health", func(c *fiber.Ctx) error {
 		ctx, cancel := context.WithTimeout(c.UserContext(), healthPingTimeout)
@@ -107,6 +114,23 @@ func newApp(master pinger) *fiber.App {
 		return c.JSON(fiber.Map{
 			"status": "ok",
 			"master": "up",
+		})
+	})
+
+	// Everything registered below this line requires a valid X-Tenant-Code.
+	// /health is registered above, so it works without the header.
+	app.Use(middleware.Tenant(resolver))
+
+	app.Get("/tenant", func(c *fiber.Ctx) error {
+		t, ok := middleware.TenantFrom(c)
+		if !ok {
+			return httpx.Error(c, fiber.StatusInternalServerError,
+				"internal_error", "Tenant missing from request context")
+		}
+		return c.JSON(fiber.Map{
+			"code":      t.Code,
+			"site_name": t.SiteName,
+			"currency":  t.Currency,
 		})
 	})
 
