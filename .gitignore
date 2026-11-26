@@ -1,12 +1,31 @@
-# Local secrets
+# Local secrets and environment
 .env
 .env.*
 !.env.example
 
+# Local database access notes (contain throw-away credentials)
+DATABASE_ACCESS.md
+
 # Go build artifacts
 /bin/
+/dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
 *.test
 *.out
+*.prof
+coverage.html
 
-#other
-DATABASE_ACCESS.md
+# IDE / editor settings
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
