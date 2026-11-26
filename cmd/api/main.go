@@ -18,6 +18,8 @@ import (
 const (
 	port            = "3000"
 	shutdownTimeout = 10 * time.Second
+
+	healthPingTimeout = 2 * time.Second
 )
 
 func main() {
@@ -40,7 +42,7 @@ func run() error {
 
 	log.Println("connected to master database")
 
-	app := newApp()
+	app := newApp(db)
 
 	ctx, stop := signal.NotifyContext(
 		context.Background(),
@@ -81,12 +83,30 @@ func run() error {
 	}
 }
 
-func newApp() *fiber.App {
+// pinger is satisfied by *sql.DB; it lets tests stub the master connection.
+type pinger interface {
+	PingContext(ctx context.Context) error
+}
+
+func newApp(master pinger) *fiber.App {
 	app := fiber.New()
 
 	app.Get("/health", func(c *fiber.Ctx) error {
+		ctx, cancel := context.WithTimeout(c.UserContext(), healthPingTimeout)
+		defer cancel()
+
+		if err := master.PingContext(ctx); err != nil {
+			log.Printf("health check: master database ping failed: %v", err)
+
+			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+				"status": "unavailable",
+				"master": "down",
+			})
+		}
+
 		return c.JSON(fiber.Map{
 			"status": "ok",
+			"master": "up",
 		})
 	})
 
