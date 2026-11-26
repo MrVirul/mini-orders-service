@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,8 +11,14 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func TestHealth(t *testing.T) {
-	app := newApp()
+type fakePinger struct{ err error }
+
+func (f fakePinger) PingContext(context.Context) error { return f.err }
+
+func getHealth(t *testing.T, p pinger) (int, map[string]string) {
+	t.Helper()
+
+	app := newApp(p)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	resp, err := app.Test(req, -1)
@@ -19,17 +27,32 @@ func TestHealth(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != fiber.StatusOK {
-		t.Fatalf("status = %d, want %d", resp.StatusCode, fiber.StatusOK)
-	}
-
-	var body struct {
-		Status string `json:"status"`
-	}
+	var body map[string]string
 	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
 		t.Fatalf("decode body: %v", err)
 	}
-	if body.Status != "ok" {
-		t.Fatalf("status body = %q, want %q", body.Status, "ok")
+
+	return resp.StatusCode, body
+}
+
+func TestHealth_MasterUp(t *testing.T) {
+	status, body := getHealth(t, fakePinger{})
+
+	if status != fiber.StatusOK {
+		t.Fatalf("status = %d, want %d", status, fiber.StatusOK)
+	}
+	if body["status"] != "ok" || body["master"] != "up" {
+		t.Fatalf("body = %v, want status ok / master up", body)
+	}
+}
+
+func TestHealth_MasterDown(t *testing.T) {
+	status, body := getHealth(t, fakePinger{err: errors.New("connection refused")})
+
+	if status != fiber.StatusServiceUnavailable {
+		t.Fatalf("status = %d, want %d", status, fiber.StatusServiceUnavailable)
+	}
+	if body["status"] != "unavailable" || body["master"] != "down" {
+		t.Fatalf("body = %v, want status unavailable / master down", body)
 	}
 }
