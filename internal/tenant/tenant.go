@@ -70,3 +70,12 @@ func FindByCode(ctx context.Context, db *sql.DB, code string) (*Tenant, error) {
 
 	return &t, nil
 }
+
+// Repository adapts the FindByCode function to the Finder interface.
+type Repository struct{ db *sql.DB }
+
+func NewRepository(db *sql.DB) *Repository { return &Repository{db: db} }
+
+func (r *Repository) FindByCode(ctx context.Context, code string) (*Tenant, error) {
+	return FindByCode(ctx, r.db, code)
+}
