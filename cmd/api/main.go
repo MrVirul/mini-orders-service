@@ -10,6 +10,9 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+
+	"github.com/MrVirul/mini-orders-service/internal/config"
+	"github.com/MrVirul/mini-orders-service/internal/database"
 )
 
 const (
@@ -24,6 +27,19 @@ func main() {
 }
 
 func run() error {
+	cfg, err := config.Load()
+	if err != nil {
+		return fmt.Errorf("load config: %w", err)
+	}
+
+	db, err := database.Connect(cfg.MasterDSN)
+	if err != nil {
+		return fmt.Errorf("connect to master database: %w", err)
+	}
+	defer db.Close()
+
+	log.Println("connected to master database")
+
 	app := newApp()
 
 	ctx, stop := signal.NotifyContext(

@@ -4,13 +4,16 @@ Multi-tenant order service (Go intern assignment).
 
 ## Run the API
 
-Requires Go (see `go.mod`).
+Requires Go (see `go.mod`) and the local MySQL containers.
 
 ```bash
+cp .env.example .env   # first time only
+make db-up             # start the three MySQL containers
 go run ./cmd/api
 ```
 
-The server listens on port `3000`. Verify it:
+The API verifies the master database connection on startup, then listens on port
+`3000`. Verify it:
 
 ```bash
 curl -i localhost:3000/health
@@ -19,7 +22,6 @@ curl -i localhost:3000/health
 ```
 
 Stop it with `Ctrl+C` (SIGINT) or `SIGTERM`; the server shuts down gracefully.
-MySQL is not required for `/health` at this stage.
 
 Run the checks with:
 
