@@ -1,4 +1,4 @@
-package middleware
+package tests
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
+	"github.com/MrVirul/mini-orders-service/internal/middleware"
 	"github.com/MrVirul/mini-orders-service/internal/tenant"
 )
 
@@ -29,12 +30,12 @@ func (f fakeResolver) Resolve(_ context.Context, code string) (*tenant.RequestTe
 	return nil, tenant.ErrNotFound
 }
 
-func do(t *testing.T, r Resolver, header *string) (int, map[string]any) {
+func do(t *testing.T, r middleware.Resolver, header *string) (int, map[string]any) {
 	t.Helper()
 	app := fiber.New()
-	app.Use(Tenant(r))
+	app.Use(middleware.Tenant(r))
 	app.Get("/tenant", func(c *fiber.Ctx) error {
-		tn, _ := TenantFrom(c)
+		tn, _ := middleware.TenantFrom(c)
 		return c.JSON(fiber.Map{"code": tn.Code, "currency": tn.Currency})
 	})
 
@@ -68,7 +69,7 @@ func TestTenantMiddleware(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		resolver Resolver
+		resolver middleware.Resolver
 		header   *string
 		status   int
 		errCode  string
