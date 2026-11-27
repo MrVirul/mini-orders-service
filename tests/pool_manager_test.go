@@ -1,6 +1,7 @@
-package database
+package tests
 
 import (
+	"context"
 	"database/sql"
 	"sync"
 	"sync/atomic"
@@ -8,12 +9,14 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 
+	"github.com/MrVirul/mini-orders-service/internal/database"
 	"github.com/MrVirul/mini-orders-service/internal/tenant"
 )
 
-func TestGetOrCreate_ConcurrentRequestsCreateExactlyOnePool(t *testing.T) {
+func TestGet_ConcurrentRequestsCreateExactlyOnePool(t *testing.T) {
+	ctx := context.Background()
 	var opened atomic.Int32
-	pm := NewPoolManagerWithOpener(func(string) (*sql.DB, error) {
+	pm := database.NewPoolManagerWithOpener(func(string) (*sql.DB, error) {
 		opened.Add(1)
 		db, _, err := sqlmock.New()
 		return db, err
@@ -35,7 +38,7 @@ func TestGetOrCreate_ConcurrentRequestsCreateExactlyOnePool(t *testing.T) {
 		go func() {
 			defer done.Done()
 			start.Wait() // release all goroutines together to maximise contention
-			db, err := pm.getOrCreate(tn)
+			db, err := pm.Get(ctx, tn)
 			if err != nil {
 				t.Error(err)
 				return
@@ -56,17 +59,18 @@ func TestGetOrCreate_ConcurrentRequestsCreateExactlyOnePool(t *testing.T) {
 	}
 }
 
-func TestGetOrCreate_SeparatePoolPerTenant(t *testing.T) {
+func TestGet_SeparatePoolPerTenant(t *testing.T) {
+	ctx := context.Background()
 	var opened atomic.Int32
-	pm := NewPoolManagerWithOpener(func(string) (*sql.DB, error) {
+	pm := database.NewPoolManagerWithOpener(func(string) (*sql.DB, error) {
 		opened.Add(1)
 		db, _, err := sqlmock.New()
 		return db, err
 	})
 	defer pm.Close()
 
-	a, _ := pm.getOrCreate(&tenant.Tenant{Code: "a"})
-	b, _ := pm.getOrCreate(&tenant.Tenant{Code: "b"})
+	a, _ := pm.Get(ctx, &tenant.Tenant{Code: "a"})
+	b, _ := pm.Get(ctx, &tenant.Tenant{Code: "b"})
 	if a == b || opened.Load() != 2 {
 		t.Fatalf("want 2 distinct pools, opened=%d", opened.Load())
 	}

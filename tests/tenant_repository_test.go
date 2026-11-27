@@ -1,4 +1,4 @@
-package tenant
+package tests
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+
+	"github.com/MrVirul/mini-orders-service/internal/tenant"
 )
 
 var columns = []string{
@@ -27,7 +29,7 @@ func TestFindByCode_Found(t *testing.T) {
 			"tenant_pizza_palace", "pizza_palace_user", "pw", "GBP", true,
 		))
 
-	got, err := FindByCode(context.Background(), db, "pizza_palace")
+	got, err := tenant.FindByCode(context.Background(), db, "pizza_palace")
 	if err != nil {
 		t.Fatalf("FindByCode: %v", err)
 	}
@@ -51,9 +53,9 @@ func TestFindByCode_NotFound(t *testing.T) {
 		WithArgs("nope").
 		WillReturnRows(sqlmock.NewRows(columns))
 
-	got, err := FindByCode(context.Background(), db, "nope")
-	if !errors.Is(err, ErrNotFound) {
-		t.Fatalf("err = %v, want ErrNotFound", err)
+	got, err := tenant.FindByCode(context.Background(), db, "nope")
+	if !errors.Is(err, tenant.ErrNotFound) {
+		t.Fatalf("err = %v, want tenant.ErrNotFound", err)
 	}
 	if got != nil {
 		t.Fatalf("tenant = %+v, want nil", got)
@@ -74,9 +76,9 @@ func TestFindByCode_Inactive(t *testing.T) {
 			"tenant_sushi_house", "sushi_house_user", "pw", "EUR", false,
 		))
 
-	got, err := FindByCode(context.Background(), db, "sushi_house")
-	if !errors.Is(err, ErrInactive) {
-		t.Fatalf("err = %v, want ErrInactive", err)
+	got, err := tenant.FindByCode(context.Background(), db, "sushi_house")
+	if !errors.Is(err, tenant.ErrInactive) {
+		t.Fatalf("err = %v, want tenant.ErrInactive", err)
 	}
 	if got != nil {
 		t.Fatalf("tenant = %+v, want nil", got)
